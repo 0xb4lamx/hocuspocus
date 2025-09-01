@@ -1,0 +1,62 @@
+import type { IncomingMessage as HTTPIncomingMessage } from "node:http";
+import { type CloseEvent } from "@hocuspocus/common";
+import type WebSocket from "ws";
+import type Document from "./Document.ts";
+import type { beforeSyncPayload, onStatelessPayload } from "./types.ts";
+export declare class Connection {
+    webSocket: WebSocket;
+    context: any;
+    document: Document;
+    request: HTTPIncomingMessage;
+    callbacks: {
+        onClose: ((document: Document, event?: CloseEvent) => void)[];
+        beforeHandleMessage: (connection: Connection, update: Uint8Array) => Promise<void>;
+        beforeSync: (connection: Connection, payload: Pick<beforeSyncPayload, "type" | "payload">) => Promise<void>;
+        statelessCallback: (payload: onStatelessPayload) => Promise<void>;
+    };
+    socketId: string;
+    readOnly: boolean;
+    /**
+     * Constructor.
+     */
+    constructor(connection: WebSocket, request: HTTPIncomingMessage, document: Document, socketId: string, context: any, readOnly?: boolean);
+    /**
+     * Set a callback that will be triggered when the connection is closed
+     */
+    onClose(callback: (document: Document, event?: CloseEvent) => void): Connection;
+    /**
+     * Set a callback that will be triggered when an stateless message is received
+     */
+    onStatelessCallback(callback: (payload: onStatelessPayload) => Promise<void>): Connection;
+    /**
+     * Set a callback that will be triggered before an message is handled
+     */
+    beforeHandleMessage(callback: (connection: Connection, update: Uint8Array) => Promise<any>): Connection;
+    /**
+     * Set a callback that will be triggered before a sync message is handled
+     */
+    beforeSync(callback: (connection: Connection, payload: Pick<beforeSyncPayload, "type" | "payload">) => Promise<any>): Connection;
+    /**
+     * Send the given message
+     */
+    send(message: any): void;
+    /**
+     * Send a stateless message with payload
+     */
+    sendStateless(payload: string): void;
+    /**
+     * Graceful wrapper around the WebSocket close method.
+     */
+    close(event?: CloseEvent): void;
+    /**
+     * Send the current document awareness to the client, if any
+     * @private
+     */
+    private sendCurrentAwareness;
+    /**
+     * Handle an incoming message
+     * @public
+     */
+    handleMessage(data: Uint8Array): void;
+}
+export default Connection;
